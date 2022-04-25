@@ -11,17 +11,24 @@ const sheets: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (
   event
 ) => {
   try {
-    
+
+    console.log(event.body)
+
     const doc = new GoogleSpreadsheet(event.body.sheetId)
 
     await doc.useServiceAccountAuth({
-        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        private_key: process.env.GOOGLE_PRIVATE_KEY,
+      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+      private_key: process.env.GOOGLE_PRIVATE_KEY,
     })
 
     await doc.loadInfo();
 
     const sheet = doc.sheetsByTitle[event.body.sheetTitle];
+
+    if(!sheet) return formatJSONResponse({
+      success: false,
+      message: `Sheet doesn't exist`
+    }, 404);
 
     const newRow = {};
 
@@ -36,12 +43,12 @@ const sheets: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (
     });
 
   } catch (error) {
-    
-    console.log(error);
+   
+    console.log(error.toJSON ? error.toJSON() : error);
 
     return formatJSONResponse({
       success: false,
-      message: error.toJSON().message || 'Something went wrong'
+      message: 'Something went wrong'
     }, 500);
 
   }
